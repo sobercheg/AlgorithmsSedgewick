@@ -13,6 +13,7 @@ public class Percolation {
   private boolean percolates;
   private final int topSite;
   private final int bottomSite;
+  private int opened;
 
 
   public Percolation(int size) {
@@ -35,6 +36,7 @@ public class Percolation {
     validate(i, j);
     openSites[xyTo1D(i, j)] = true;
     percolates = performExperiment();
+    opened++;
   }
 
   public boolean isOpen(int i, int j) {
@@ -63,28 +65,30 @@ public class Percolation {
 
     // Step 3. Union all adjacent open sites
     // Traverse in a top-to-bottom left-to-right fashion with looking at the top and left neighbors.
-    for (int i = 1; i <= n; i++) {
-      for (int j = 1; j <= n; j++) {
-        int currentIndex = xyTo1D(i, j);
-        int topIndex = xyTo1D(i - 1, j);
-        // Union if both the current and top sites are open and connected to top
-        if (i > 1 && isOpen(i, j) && isOpen(i - 1, j) && union.connected(topSite, topIndex)) {
-          union.union(currentIndex, topSite);
-        }
-        int leftIndex = xyTo1D(i, j - 1);
-        // Union if both the current and left sites are open and connected to top
-        if (j > 1 && isOpen(i, j) && isOpen(i, j - 1) && union.connected(topSite, leftIndex)) {
-          union.union(currentIndex, topSite);
-        }
-        int bottomIndex = xyTo1D(i + 1, j);
-        // Union if both the current and bottom sites are open and connected to top
-        if (i < n && isOpen(i, j) && isOpen(i + 1, j) && union.connected(topSite, bottomIndex)) {
-          union.union(currentIndex, topSite);
-        }
-        int rightIndex = xyTo1D(i, j + 1);
-        // Union if both the current and right sites are open and connected to top
-        if (j < n && isOpen(i, j) && isOpen(i, j + 1) && union.connected(topSite, rightIndex)) {
-          union.union(currentIndex, topSite);
+    for (int times = 0; times < opened; times++) {
+      for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= n; j++) {
+          int currentIndex = xyTo1D(i, j);
+          int topIndex = xyTo1D(i - 1, j);
+          // Union if both the current and top sites are open and connected to top
+          if (i > 1 && isOpen(i, j) && isOpen(i - 1, j) && union.connected(topSite, topIndex)) {
+            union.union(currentIndex, topIndex);
+          }
+          int leftIndex = xyTo1D(i, j - 1);
+          // Union if both the current and left sites are open and connected to top
+          if (j > 1 && isOpen(i, j) && isOpen(i, j - 1) && union.connected(topSite, leftIndex)) {
+            union.union(currentIndex, leftIndex);
+          }
+          int bottomIndex = xyTo1D(i + 1, j);
+          // Union if both the current and bottom sites are open and connected to top
+          if (i < n && isOpen(i, j) && isOpen(i + 1, j) && union.connected(topSite, bottomIndex)) {
+            union.union(currentIndex, bottomIndex);
+          }
+          int rightIndex = xyTo1D(i, j + 1);
+          // Union if both the current and right sites are open and connected to top
+          if (j < n && isOpen(i, j) && isOpen(i, j + 1) && union.connected(topSite, rightIndex)) {
+            union.union(currentIndex, rightIndex);
+          }
         }
       }
     }
@@ -146,9 +150,25 @@ public class Percolation {
     percolation.open(in.readInt(), in.readInt());
     percolation.open(in.readInt(), in.readInt());
     percolation.open(in.readInt(), in.readInt());
-    in.close();
-
+    // 6 opened
     assertTrue(percolation.isFull(5, 5), "(5, 5) should be full");
+
+    percolation.open(in.readInt(), in.readInt());
+    percolation.open(in.readInt(), in.readInt());
+    percolation.open(in.readInt(), in.readInt());
+    percolation.open(in.readInt(), in.readInt());
+    percolation.open(in.readInt(), in.readInt());
+    percolation.open(in.readInt(), in.readInt());
+    percolation.open(in.readInt(), in.readInt());
+    percolation.open(in.readInt(), in.readInt());
+    percolation.open(in.readInt(), in.readInt());
+    percolation.open(in.readInt(), in.readInt());
+    percolation.open(in.readInt(), in.readInt());
+    percolation.open(in.readInt(), in.readInt());
+    // 18 opened
+    assertTrue(percolation.percolates(), "Percolates after 18 sites opened");
+    assertTrue(percolation.isOpen(5, 4), "(5, 4) should be open");
+    in.close();
   }
 
   private static void assertTrue(boolean expression, String msg) {
