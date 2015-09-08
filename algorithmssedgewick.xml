@@ -206,8 +206,9 @@
   </target>
 
   <target name="zip" depends="compile.module.algorithmssedgewick.production" description="Zip solution">
-    <zip destfile="percolation.zip" basedir="${algorithmssedgewick.output.dir}">
-      <file file="Percolation.class"/>
+    <zip destfile="percolation.zip" basedir="${module.algorithmssedgewick.basedir}/src">
+      <file file="Percolation.java"/>
+      <file file="PercolationStats.java"/>
     </zip>
   </target>
 

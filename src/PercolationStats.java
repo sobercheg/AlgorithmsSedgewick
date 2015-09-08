@@ -62,11 +62,11 @@ public class PercolationStats {
   }
 
   private double[] performAllExperiments() {
-    double[] openSitesFraction = new double[experiments];
+    double[] openSites = new double[experiments];
     for (int i = 0; i < experiments; i++) {
-      openSitesFraction[i] = (double)performExperiment() / (size * size);
+      openSites[i] = (double) performExperiment() / (size * size);
     }
-    return openSitesFraction;
+    return openSites;
   }
 
   public static void main(String[] args) {
