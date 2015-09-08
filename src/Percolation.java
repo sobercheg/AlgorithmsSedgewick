@@ -1,7 +1,8 @@
 import edu.princeton.cs.algs4.WeightedQuickUnionUF;
 
 /**
- * Created by apuhach on 9/6/15.
+ * Programming Assignment 1: Percolation.
+ * http://coursera.cs.princeton.edu/algs4/assignments/percolation.html
  */
 public class Percolation {
 
