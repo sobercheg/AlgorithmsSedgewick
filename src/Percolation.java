@@ -1,4 +1,5 @@
 import edu.princeton.cs.algs4.In;
+import edu.princeton.cs.algs4.Queue;
 import edu.princeton.cs.algs4.WeightedQuickUnionUF;
 
 /**
@@ -10,11 +11,9 @@ public class Percolation {
   private final WeightedQuickUnionUF union;
   private final int n;
   private final boolean[] openSites;
-  private boolean percolates;
+  private final boolean[] fullSites;
   private final int topSite;
   private final int bottomSite;
-  private int opened;
-
 
   public Percolation(int size) {
     if (size <= 0) {
@@ -24,19 +23,17 @@ public class Percolation {
     // add 2 more openSites connecting all upper and lower row openSites
     this.union = new WeightedQuickUnionUF(n * n + 2);
     this.openSites = new boolean[n * n];
-    this.percolates = false;
+    this.fullSites = new boolean[n * n];
 
-    // Step 1. Union all upper row open sites to site (n * n)
-    // Step 2. Union all lower row open sites to site (n * n + 1)
     this.topSite = n * n;
     this.bottomSite = n * n + 1;
   }
 
   public void open(int i, int j) {
     validate(i, j);
-    openSites[xyTo1D(i, j)] = true;
-    percolates = performExperiment();
-    opened++;
+    if (!isOpen(i, j)) {
+      openSites[xyTo1D(i, j)] = true;
+    }
   }
 
   public boolean isOpen(int i, int j) {
@@ -46,17 +43,27 @@ public class Percolation {
 
   public boolean isFull(int i, int j) {
     validate(i, j);
-    return union.connected(topSite, xyTo1D(i, j));
+    performExperiment();
+    return fullSites[xyTo1D(i, j)];
   }   // is site (row i, column j) full?
 
   public boolean percolates() {
-    return percolates;
+    return performExperiment();
   }
 
   private boolean performExperiment() {
+    for (int i = 0; i < fullSites.length; i++) {
+      fullSites[i] = false;
+    }
+    Queue<Integer> fullSiteQueue = new Queue<>();
+    // Step 1. Union all upper row open sites to site (n * n)
+    // Step 2. Union all lower row open sites to site (n * n + 1)
     for (int i = 1; i <= n; i++) {
       if (isOpen(1, i)) {
-        union.union(xyTo1D(1, i), topSite);
+        int index = xyTo1D(1, i);
+        union.union(index, topSite);
+        fullSites[index] = true;
+        fullSiteQueue.enqueue(index);
       }
       if (isOpen(n, i)) {
         union.union(xyTo1D(n, i), bottomSite);
@@ -64,35 +71,40 @@ public class Percolation {
     }
 
     // Step 3. Union all adjacent open sites
-    // Traverse in a top-to-bottom left-to-right fashion with looking at the top and left neighbors.
-    for (int times = 0; times < opened; times++) {
-      for (int i = 1; i <= n; i++) {
-        for (int j = 1; j <= n; j++) {
-          int currentIndex = xyTo1D(i, j);
-          int topIndex = xyTo1D(i - 1, j);
-          // Union if both the current and top sites are open and connected to top
-          if (i > 1 && isOpen(i, j) && isOpen(i - 1, j) && union.connected(topSite, topIndex)) {
-            union.union(currentIndex, topIndex);
-          }
-          int leftIndex = xyTo1D(i, j - 1);
-          // Union if both the current and left sites are open and connected to top
-          if (j > 1 && isOpen(i, j) && isOpen(i, j - 1) && union.connected(topSite, leftIndex)) {
-            union.union(currentIndex, leftIndex);
-          }
-          int bottomIndex = xyTo1D(i + 1, j);
-          // Union if both the current and bottom sites are open and connected to top
-          if (i < n && isOpen(i, j) && isOpen(i + 1, j) && union.connected(topSite, bottomIndex)) {
-            union.union(currentIndex, bottomIndex);
-          }
-          int rightIndex = xyTo1D(i, j + 1);
-          // Union if both the current and right sites are open and connected to top
-          if (j < n && isOpen(i, j) && isOpen(i, j + 1) && union.connected(topSite, rightIndex)) {
-            union.union(currentIndex, rightIndex);
-          }
-        }
+    while (!fullSiteQueue.isEmpty()) {
+      int currentIndex = fullSiteQueue.dequeue();
+      int[] currentXY = indexToXY(currentIndex);
+      int i = currentXY[0];
+      int j = currentXY[1];
+      int topIndex = xyTo1D(i - 1, j);
+      // Union if both the current and top sites are open
+      if (i > 1 && isOpen(i, j) && isOpen(i - 1, j) && !fullSites[topIndex]) {
+        union.union(currentIndex, topIndex);
+        fullSites[topIndex] = true;
+        fullSiteQueue.enqueue(topIndex);
+      }
+      int leftIndex = xyTo1D(i, j - 1);
+      // Union if both the current and left sites are open
+      if (j > 1 && isOpen(i, j) && isOpen(i, j - 1) && !fullSites[leftIndex]) {
+        union.union(currentIndex, leftIndex);
+        fullSites[leftIndex] = true;
+        fullSiteQueue.enqueue(leftIndex);
+      }
+      int bottomIndex = xyTo1D(i + 1, j);
+      // Union if both the current and bottom sites are open
+      if (i < n && isOpen(i, j) && isOpen(i + 1, j) && !fullSites[bottomIndex]) {
+        union.union(currentIndex, bottomIndex);
+        fullSites[bottomIndex] = true;
+        fullSiteQueue.enqueue(bottomIndex);
+      }
+      int rightIndex = xyTo1D(i, j + 1);
+      // Union if both the current and right sites are open
+      if (j < n && isOpen(i, j) && isOpen(i, j + 1) && !fullSites[rightIndex]) {
+        union.union(currentIndex, rightIndex);
+        fullSites[rightIndex] = true;
+        fullSiteQueue.enqueue(rightIndex);
       }
     }
-
     // Step 4. Check if the two additional sites connecting the top and bottom rows belong to the same component
     return union.connected(topSite, bottomSite);
   }
@@ -105,6 +117,10 @@ public class Percolation {
 
   private int xyTo1D(int i, int j) {
     return (i - 1) * n + j - 1;
+  }
+
+  private int[] indexToXY(int index) {
+    return new int[] {index / n + 1, index % n + 1};
   }
 
   public static void main(String[] args) {
@@ -151,6 +167,7 @@ public class Percolation {
     percolation.open(in.readInt(), in.readInt());
     percolation.open(in.readInt(), in.readInt());
     // 6 opened
+    assertTrue(!percolation.percolates(), "Does not percolate after 6 sites opened");
     assertTrue(percolation.isFull(5, 5), "(5, 5) should be full");
 
     percolation.open(in.readInt(), in.readInt());
