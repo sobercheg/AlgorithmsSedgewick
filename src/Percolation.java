@@ -1,5 +1,4 @@
 import edu.princeton.cs.algs4.In;
-import edu.princeton.cs.algs4.Queue;
 import edu.princeton.cs.algs4.WeightedQuickUnionUF;
 
 /**
@@ -11,7 +10,6 @@ public class Percolation {
   private final WeightedQuickUnionUF union;
   private final int n;
   private final boolean[] openSites;
-  private final boolean[] fullSites;
   private final int topSite;
   private final int bottomSite;
 
@@ -23,7 +21,6 @@ public class Percolation {
     // add 2 more openSites connecting all upper and lower row openSites
     this.union = new WeightedQuickUnionUF(n * n + 2);
     this.openSites = new boolean[n * n];
-    this.fullSites = new boolean[n * n];
 
     this.topSite = n * n;
     this.bottomSite = n * n + 1;
@@ -31,8 +28,39 @@ public class Percolation {
 
   public void open(int i, int j) {
     validate(i, j);
-    if (!isOpen(i, j)) {
-      openSites[xyTo1D(i, j)] = true;
+    if (isOpen(i, j)) {
+      return;
+    }
+    int currentIndex = xyTo1D(i, j);
+    // Step 1. Union all upper row open sites to site (n * n)
+    // Step 2. Union all lower row open sites to site (n * n + 1)
+    if (i == 1) {
+      union.union(currentIndex, topSite);
+    }
+    if (i == n) {
+      union.union(currentIndex, bottomSite);
+    }
+    openSites[currentIndex] = true;
+    // Union all adjacent open sites
+    int topIndex = xyTo1D(i - 1, j);
+    // Union if both the current and top sites are open
+    if (i > 1 && isOpen(i, j) && isOpen(i - 1, j) && !union.connected(topIndex, currentIndex)) {
+      union.union(currentIndex, topIndex);
+    }
+    int leftIndex = xyTo1D(i, j - 1);
+    // Union if both the current and left sites are open
+    if (j > 1 && isOpen(i, j) && isOpen(i, j - 1) && !union.connected(leftIndex, currentIndex)) {
+      union.union(currentIndex, leftIndex);
+    }
+    int bottomIndex = xyTo1D(i + 1, j);
+    // Union if both the current and bottom sites are open
+    if (i < n && isOpen(i, j) && isOpen(i + 1, j) && !union.connected(bottomIndex, currentIndex)) {
+      union.union(currentIndex, bottomIndex);
+    }
+    int rightIndex = xyTo1D(i, j + 1);
+    // Union if both the current and right sites are open
+    if (j < n && isOpen(i, j) && isOpen(i, j + 1) && !union.connected(rightIndex, currentIndex)) {
+      union.union(currentIndex, rightIndex);
     }
   }
 
@@ -43,70 +71,11 @@ public class Percolation {
 
   public boolean isFull(int i, int j) {
     validate(i, j);
-    performExperiment();
-    return fullSites[xyTo1D(i, j)];
-  }   // is site (row i, column j) full?
-
-  public boolean percolates() {
-    return performExperiment();
+    return isOpen(i, j) && union.connected(xyTo1D(i, j), topSite);
   }
 
-  private boolean performExperiment() {
-    for (int i = 0; i < fullSites.length; i++) {
-      fullSites[i] = false;
-    }
-    Queue<Integer> fullSiteQueue = new Queue<>();
-    // Step 1. Union all upper row open sites to site (n * n)
-    // Step 2. Union all lower row open sites to site (n * n + 1)
-    for (int i = 1; i <= n; i++) {
-      if (isOpen(1, i)) {
-        int index = xyTo1D(1, i);
-        union.union(index, topSite);
-        fullSites[index] = true;
-        fullSiteQueue.enqueue(index);
-      }
-      if (isOpen(n, i)) {
-        union.union(xyTo1D(n, i), bottomSite);
-      }
-    }
-
-    // Step 3. Union all adjacent open sites
-    while (!fullSiteQueue.isEmpty()) {
-      int currentIndex = fullSiteQueue.dequeue();
-      int[] currentXY = indexToXY(currentIndex);
-      int i = currentXY[0];
-      int j = currentXY[1];
-      int topIndex = xyTo1D(i - 1, j);
-      // Union if both the current and top sites are open
-      if (i > 1 && isOpen(i, j) && isOpen(i - 1, j) && !fullSites[topIndex]) {
-        union.union(currentIndex, topIndex);
-        fullSites[topIndex] = true;
-        fullSiteQueue.enqueue(topIndex);
-      }
-      int leftIndex = xyTo1D(i, j - 1);
-      // Union if both the current and left sites are open
-      if (j > 1 && isOpen(i, j) && isOpen(i, j - 1) && !fullSites[leftIndex]) {
-        union.union(currentIndex, leftIndex);
-        fullSites[leftIndex] = true;
-        fullSiteQueue.enqueue(leftIndex);
-      }
-      int bottomIndex = xyTo1D(i + 1, j);
-      // Union if both the current and bottom sites are open
-      if (i < n && isOpen(i, j) && isOpen(i + 1, j) && !fullSites[bottomIndex]) {
-        union.union(currentIndex, bottomIndex);
-        fullSites[bottomIndex] = true;
-        fullSiteQueue.enqueue(bottomIndex);
-      }
-      int rightIndex = xyTo1D(i, j + 1);
-      // Union if both the current and right sites are open
-      if (j < n && isOpen(i, j) && isOpen(i, j + 1) && !fullSites[rightIndex]) {
-        union.union(currentIndex, rightIndex);
-        fullSites[rightIndex] = true;
-        fullSiteQueue.enqueue(rightIndex);
-      }
-    }
-    // Step 4. Check if the two additional sites connecting the top and bottom rows belong to the same component
-    return union.connected(topSite, bottomSite);
+  public boolean percolates() {
+    return union.connected(bottomSite, topSite);
   }
 
   private void validate(int i, int j) {
