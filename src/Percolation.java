@@ -31,6 +31,11 @@ public class Percolation {
     if (isOpen(i, j)) {
       return;
     }
+
+    unionCurrentSite(i, j);
+  }
+
+  private void unionCurrentSite(int i, int j) {
     int currentIndex = xyTo1D(i, j);
     // Step 1. Union all upper row open sites to site (n * n)
     // Step 2. Union all lower row open sites to site (n * n + 1)
