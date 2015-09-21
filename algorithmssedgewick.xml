@@ -205,16 +205,24 @@
     <!-- Perform any build initialization in this target -->
   </target>
 
-  <target name="zip" depends="compile.module.algorithmssedgewick.production" description="Zip solution">
+  <target name="zip-percolation" depends="compile.module.algorithmssedgewick.production" description="Zip solution">
     <zip destfile="percolation.zip" basedir="${module.algorithmssedgewick.basedir}/src">
       <file file="Percolation.java"/>
       <file file="PercolationStats.java"/>
     </zip>
   </target>
 
+  <target name="zip-queues" depends="compile.module.algorithmssedgewick.production" description="Zip solution">
+    <zip destfile="queues.zip" basedir="${module.algorithmssedgewick.basedir}/src">
+      <file file="Deque.java"/>
+      <file file="RandomizedQueue.java"/>
+      <file file="Subset.java"/>
+    </zip>
+  </target>
+
   <target name="clean" depends="clean.module.algorithmssedgewick" description="cleanup all"/>
 
-  <target name="build.modules" depends="init, clean, compile.module.algorithmssedgewick, zip" description="build all modules"/>
+  <target name="build.modules" depends="init, clean, compile.module.algorithmssedgewick, zip-percolation, zip-queues" description="build all modules"/>
 
   <target name="all" depends="build.modules" description="build all"/>
 </project>
