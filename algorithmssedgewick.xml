@@ -205,14 +205,14 @@
     <!-- Perform any build initialization in this target -->
   </target>
 
-  <target name="zip-percolation" depends="compile.module.algorithmssedgewick.production" description="Zip solution">
+  <target name="zip-percolation" depends="compile.module.algorithmssedgewick.production" description="Zip percolation solution">
     <zip destfile="percolation.zip" basedir="${module.algorithmssedgewick.basedir}/src">
       <file file="Percolation.java"/>
       <file file="PercolationStats.java"/>
     </zip>
   </target>
 
-  <target name="zip-queues" depends="compile.module.algorithmssedgewick.production" description="Zip solution">
+  <target name="zip-queues" depends="compile.module.algorithmssedgewick.production" description="Zip queues solution">
     <zip destfile="queues.zip" basedir="${module.algorithmssedgewick.basedir}/src">
       <file file="Deque.java"/>
       <file file="RandomizedQueue.java"/>
@@ -220,9 +220,17 @@
     </zip>
   </target>
 
+  <target name="zip-collinear" depends="compile.module.algorithmssedgewick.production" description="Zip collinear points solution">
+    <zip destfile="collinear.zip" basedir="${module.algorithmssedgewick.basedir}/src">
+      <file file="Point.java"/>
+      <file file="BruteCollinearPoints.java"/>
+      <file file="FastCollinearPoints.java"/>
+    </zip>
+  </target>
+
   <target name="clean" depends="clean.module.algorithmssedgewick" description="cleanup all"/>
 
-  <target name="build.modules" depends="init, clean, compile.module.algorithmssedgewick, zip-percolation, zip-queues" description="build all modules"/>
+  <target name="build.modules" depends="init, clean, compile.module.algorithmssedgewick, zip-percolation, zip-queues, zip-collinear" description="build all modules"/>
 
   <target name="all" depends="build.modules" description="build all"/>
 </project>
