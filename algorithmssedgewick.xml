@@ -228,9 +228,16 @@
     </zip>
   </target>
 
+  <target name="zip-puzzle" depends="compile.module.algorithmssedgewick.production" description="8 puzzle solution">
+    <zip destfile="8puzzle.zip" basedir="${module.algorithmssedgewick.basedir}/src">
+      <file file="Board.java"/>
+      <file file="Solver.java"/>
+    </zip>
+  </target>
+
   <target name="clean" depends="clean.module.algorithmssedgewick" description="cleanup all"/>
 
-  <target name="build.modules" depends="init, clean, compile.module.algorithmssedgewick, zip-percolation, zip-queues, zip-collinear" description="build all modules"/>
+  <target name="build.modules" depends="init, clean, compile.module.algorithmssedgewick, zip-percolation, zip-queues, zip-collinear, zip-puzzle" description="build all modules"/>
 
   <target name="all" depends="build.modules" description="build all"/>
 </project>
