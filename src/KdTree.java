@@ -137,7 +137,8 @@ public class KdTree {
     return rectPoints;
   }
 
-  private void rangeInternal(Node node, RectHV rect, RectHV nodeRect, SplitDirection splitDirection, Queue<Point2D> rectPoints) {
+  private void rangeInternal(Node node, RectHV rect, RectHV nodeRect, SplitDirection splitDirection,
+      Queue<Point2D> rectPoints) {
     if (node == null) {
       return;
     }
@@ -170,7 +171,8 @@ public class KdTree {
     return nearestInternal(point, root, BOUND_RECT, SplitDirection.VERTICAL, root.p, Double.MAX_VALUE);
   }
 
-  private Point2D nearestInternal(Point2D point, Node node, RectHV nodeRect, SplitDirection splitDirection, Point2D currentNearest, double currentDistance) {
+  private Point2D nearestInternal(Point2D point, Node node, RectHV nodeRect,
+      SplitDirection splitDirection, Point2D currentNearest, double currentDistance) {
     if (node == null) {
       return currentNearest;
     }
