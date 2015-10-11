@@ -14,7 +14,6 @@ public class KdTree {
 
   private static final class Node {
     private Point2D p;      // the point
-    private RectHV rect;    // the axis-aligned rectangle corresponding to this node
     private Node lb;        // the left/bottom subtree
     private Node rt;        // the right/top subtree
   }
@@ -48,14 +47,13 @@ public class KdTree {
 
   public void insert(Point2D p) {
     checkArgument(p);
-    root = insertInternal(root, p, SplitDirection.VERTICAL, BOUND_RECT);
+    root = insertInternal(root, p, SplitDirection.VERTICAL);
   }
 
-  private Node insertInternal(Node node, Point2D point, SplitDirection direction, RectHV rect) {
+  private Node insertInternal(Node node, Point2D point, SplitDirection direction) {
     if (node == null) {
       node = new Node();
       node.p = point;
-      node.rect = rect;
       size++;
       return node;
     }
@@ -65,19 +63,15 @@ public class KdTree {
     }
     if (direction == SplitDirection.VERTICAL) {
       if (point.x() < node.p.x()) {
-        node.lb = insertInternal(node.lb, point, SplitDirection.HORIZONTAL,
-            new RectHV(rect.xmin(), rect.ymin(), node.p.x(), rect.ymax()));
+        node.lb = insertInternal(node.lb, point, SplitDirection.HORIZONTAL);
       } else {
-        node.rt = insertInternal(node.rt, point, SplitDirection.HORIZONTAL,
-            new RectHV(node.p.x(), rect.ymin(), rect.xmax(), rect.ymax()));
+        node.rt = insertInternal(node.rt, point, SplitDirection.HORIZONTAL);
       }
     } else {
       if (point.y() < node.p.y()) {
-        node.lb = insertInternal(node.lb, point, SplitDirection.VERTICAL,
-            new RectHV(rect.xmin(), rect.ymin(), rect.xmax(), node.p.y()));
+        node.lb = insertInternal(node.lb, point, SplitDirection.VERTICAL);
       } else {
-        node.rt = insertInternal(node.rt, point, SplitDirection.VERTICAL,
-            new RectHV(rect.xmin(), node.p.y(), rect.xmax(), rect.ymax()));
+        node.rt = insertInternal(node.rt, point, SplitDirection.VERTICAL);
       }
     }
     return node;
@@ -139,22 +133,31 @@ public class KdTree {
   public Iterable<Point2D> range(RectHV rect) {
     checkArgument(rect);
     Queue<Point2D> rectPoints = new Queue<>();
-    rangeInternal(root, rect, SplitDirection.VERTICAL, rectPoints);
+    rangeInternal(root, rect, BOUND_RECT, SplitDirection.VERTICAL, rectPoints);
     return rectPoints;
   }
 
-  private void rangeInternal(Node node, RectHV rect, SplitDirection splitDirection, Queue<Point2D> rectPoints) {
+  private void rangeInternal(Node node, RectHV rect, RectHV nodeRect, SplitDirection splitDirection, Queue<Point2D> rectPoints) {
     if (node == null) {
       return;
     }
-    if (!node.rect.intersects(rect)) {
+    if (!nodeRect.intersects(rect)) {
       return;
     }
     if (rect.contains(node.p)) {
       rectPoints.enqueue(node.p);
     }
-    rangeInternal(node.lb, rect, SplitDirection.getOther(splitDirection), rectPoints);
-    rangeInternal(node.rt, rect, SplitDirection.getOther(splitDirection), rectPoints);
+    RectHV lbRect;
+    RectHV rtRect;
+    if (splitDirection == SplitDirection.VERTICAL) {
+      lbRect = new RectHV(nodeRect.xmin(), nodeRect.ymin(), node.p.x(), nodeRect.ymax());
+      rtRect = new RectHV(node.p.x(), nodeRect.ymin(), nodeRect.xmax(), nodeRect.ymax());
+    } else {
+      lbRect = new RectHV(nodeRect.xmin(), nodeRect.ymin(), nodeRect.xmax(), node.p.y());
+      rtRect = new RectHV(nodeRect.xmin(), node.p.y(), nodeRect.xmax(), nodeRect.ymax());
+    }
+    rangeInternal(node.lb, rect, lbRect, SplitDirection.getOther(splitDirection), rectPoints);
+    rangeInternal(node.rt, rect, rtRect, SplitDirection.getOther(splitDirection), rectPoints);
   }
 
   /**
@@ -164,14 +167,14 @@ public class KdTree {
     if (isEmpty()) {
       return null;
     }
-    return nearestInternal(point, root, root.p, Double.MAX_VALUE);
+    return nearestInternal(point, root, BOUND_RECT, SplitDirection.VERTICAL, root.p, Double.MAX_VALUE);
   }
 
-  private Point2D nearestInternal(Point2D point, Node node, Point2D currentNearest, double currentDistance) {
+  private Point2D nearestInternal(Point2D point, Node node, RectHV nodeRect, SplitDirection splitDirection, Point2D currentNearest, double currentDistance) {
     if (node == null) {
       return currentNearest;
     }
-    if (node.rect.distanceSquaredTo(point) > currentDistance) {
+    if (nodeRect.distanceSquaredTo(point) > currentDistance) {
       return currentNearest;
     }
     double pointDist = node.p.distanceSquaredTo(point);
@@ -181,10 +184,19 @@ public class KdTree {
       bestDist = pointDist;
       bestPoint = node.p;
     }
+    RectHV lbRect;
+    RectHV rtRect;
+    if (splitDirection == SplitDirection.VERTICAL) {
+      lbRect = new RectHV(nodeRect.xmin(), nodeRect.ymin(), node.p.x(), nodeRect.ymax());
+      rtRect = new RectHV(node.p.x(), nodeRect.ymin(), nodeRect.xmax(), nodeRect.ymax());
+    } else {
+      lbRect = new RectHV(nodeRect.xmin(), nodeRect.ymin(), nodeRect.xmax(), node.p.y());
+      rtRect = new RectHV(nodeRect.xmin(), node.p.y(), nodeRect.xmax(), nodeRect.ymax());
+    }
 
-    bestPoint = nearestInternal(point, node.lb, bestPoint, bestDist);
+    bestPoint = nearestInternal(point, node.lb, lbRect, SplitDirection.getOther(splitDirection), bestPoint, bestDist);
     bestDist = Math.min(point.distanceSquaredTo(bestPoint), bestDist);
-    bestPoint = nearestInternal(point, node.rt, bestPoint, bestDist);
+    bestPoint = nearestInternal(point, node.rt, rtRect, SplitDirection.getOther(splitDirection), bestPoint, bestDist);
     return bestPoint;
   }
 
