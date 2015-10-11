@@ -49,7 +49,6 @@ public class KdTree {
   public void insert(Point2D p) {
     checkArgument(p);
     root = insertInternal(root, p, SplitDirection.VERTICAL, BOUND_RECT);
-    size++;
   }
 
   private Node insertInternal(Node node, Point2D point, SplitDirection direction, RectHV rect) {
@@ -57,9 +56,13 @@ public class KdTree {
       node = new Node();
       node.p = point;
       node.rect = rect;
+      size++;
       return node;
     }
-
+    // duplicate check
+    if (node.p.equals(point)) {
+      return node;
+    }
     if (direction == SplitDirection.VERTICAL) {
       if (point.x() < node.p.x()) {
         node.lb = insertInternal(node.lb, point, SplitDirection.HORIZONTAL,
@@ -181,7 +184,7 @@ public class KdTree {
 
     bestPoint = nearestInternal(point, node.lb, bestPoint, bestDist);
     bestDist = Math.min(point.distanceSquaredTo(bestPoint), bestDist);
-    bestPoint = nearestInternal(point, node.lb, bestPoint, bestDist);
+    bestPoint = nearestInternal(point, node.rt, bestPoint, bestDist);
     return bestPoint;
   }
 
@@ -194,10 +197,15 @@ public class KdTree {
 
   public static void main(String[] args) {
     KdTree kdTree = new KdTree();
+    assertTrue(kdTree.size() == 0, "size 0");
     kdTree.insert(new Point2D(0, 0.5));
+    assertTrue(kdTree.size() == 1, "size 1");
     kdTree.insert(new Point2D(0.5, 1));
+    assertTrue(kdTree.size() == 2, "size 2");
     kdTree.insert(new Point2D(0.5, 0));
+    assertTrue(kdTree.size() == 3, "size 3");
     kdTree.insert(new Point2D(1, 0.5));
+    assertTrue(kdTree.size() == 4, "size 4");
 
     assertTrue(kdTree.contains(new Point2D(0, 0.5)), "contains");
     assertTrue(kdTree.contains(new Point2D(1, 0.5)), "contains");
@@ -217,6 +225,12 @@ public class KdTree {
     assertTrue(!rangeQueue.contains(new Point2D(0.5, 1)), "not contains");
 
     assertTrue(kdTree.nearest(new Point2D(0.1, 0.6)).equals(new Point2D(0, 0.5)), "closest to 0, 0.5");
+
+    // duplicates, check size
+    kdTree = new KdTree();
+    kdTree.insert(new Point2D(1, 1));
+    kdTree.insert(new Point2D(1, 1));
+    assertTrue(kdTree.size() == 1, "size still 1");
   }
 
   private static void assertTrue(boolean expression, String msg) {
