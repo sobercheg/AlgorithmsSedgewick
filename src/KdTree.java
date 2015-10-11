@@ -174,7 +174,7 @@ public class KdTree {
     if (node == null) {
       return currentNearest;
     }
-    if (nodeRect.distanceSquaredTo(point) > currentDistance) {
+    if (nodeRect.distanceSquaredTo(point) >= currentDistance) {
       return currentNearest;
     }
     double pointDist = node.p.distanceSquaredTo(point);
@@ -185,17 +185,22 @@ public class KdTree {
       bestPoint = node.p;
     }
     RectHV lbRect;
-    RectHV rtRect;
+
     if (splitDirection == SplitDirection.VERTICAL) {
       lbRect = new RectHV(nodeRect.xmin(), nodeRect.ymin(), node.p.x(), nodeRect.ymax());
-      rtRect = new RectHV(node.p.x(), nodeRect.ymin(), nodeRect.xmax(), nodeRect.ymax());
     } else {
       lbRect = new RectHV(nodeRect.xmin(), nodeRect.ymin(), nodeRect.xmax(), node.p.y());
-      rtRect = new RectHV(nodeRect.xmin(), node.p.y(), nodeRect.xmax(), nodeRect.ymax());
     }
 
     bestPoint = nearestInternal(point, node.lb, lbRect, SplitDirection.getOther(splitDirection), bestPoint, bestDist);
     bestDist = Math.min(point.distanceSquaredTo(bestPoint), bestDist);
+
+    RectHV rtRect;
+    if (splitDirection == SplitDirection.VERTICAL) {
+      rtRect = new RectHV(node.p.x(), nodeRect.ymin(), nodeRect.xmax(), nodeRect.ymax());
+    } else {
+      rtRect = new RectHV(nodeRect.xmin(), node.p.y(), nodeRect.xmax(), nodeRect.ymax());
+    }
     bestPoint = nearestInternal(point, node.rt, rtRect, SplitDirection.getOther(splitDirection), bestPoint, bestDist);
     return bestPoint;
   }
